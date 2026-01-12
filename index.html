@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Eyes In Orbit</title>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="style.css">
+  <link href="https://cesium.com/downloads/cesiumjs/releases/1.105/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+  <script src="https://cesium.com/downloads/cesiumjs/releases/1.105/Build/Cesium/Cesium.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/satellite.js/4.0.0/satellite.min.js"></script>
+
+</head>
+<body>
+
+<select id="sat-selector">
+    <option value="active">ALL ACTIVE SATELLITES</option>
+    <option value="stations">SPACE STATIONS (ISS)</option>
+    <option value="starlink">STARLINK CONSTELLATION</option>
+    <option value="gps-ops">GPS SYSTEM (USA)</option>
+    <option value="galileo">GALILEO SYSTEM (EU)</option>
+    <option value="weather">WEATHER SATELLITES</option>
+</select>
+
+<div id="data-panel" id="panel">
+  <h3 id="sat-name" style="margin-top:0">Choose satellite To Track</h3>
+  <hr>
+  <div>Height: <span id="sat-alt" class="val">0</span> Km</div>
+  <div>Covered Area: <span id="sat-area" class="val">0</span> Km<sup>2</sup> </div>
+  <div id="warning" style="color: #ff4444; font-size: 0.8em; margin-top: 5px; display: none;">
+    * هذا القمر يغطي كامل القرص المرئي للأرض.
+  </div>
+</div>
+
+
+
+<div id="cesiumContainer"></div>
+
+<script src="main.js"></script>
+</body>
+</html>

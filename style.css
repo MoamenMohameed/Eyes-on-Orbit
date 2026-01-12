@@ -1,0 +1,36 @@
+body, html, #cesiumContainer { 
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #000; 
+}
+#data-panel { 
+    position: absolute;
+    background-color: #ffffff2e;
+    bottom: 60px; 
+    left: 30px;  
+    color: #fff; 
+    padding: 20px; 
+    border-radius: 15px; 
+    z-index: 10; 
+    width: 320px; 
+    border: 2px solid #2340c1; 
+    font-family:monospace;
+}
+.val { color: #2340c1; 
+    font-weight: bold; 
+    font-family: monospace; 
+}
+
+#sat-selector{
+    position:absolute;
+    top:20px; left:20px; 
+    background:rgba(2,11,22,0.9);
+    color:#fafafa;
+    border:1px solid #2340c1;
+    padding:10px; 
+    font-family:monospace;
+    z-index:1001;
+    }
