@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>README موسع - رادار الأقمار الصناعية</title>
+<style>
+  body { font-family: "Segoe UI", Tahoma, sans-serif; line-height: 1.6; padding: 20px; background: #f4f4f4; color: #111; }
+  h1, h2, h3, h4 { color: #1a73e8; }
+  pre { background: #272822; color: #ffffff; padding: 15px; overflow-x: auto; border-radius: 5px; }
+  code { padding: 2px 4px; border-radius: 3px; }
+  .section { margin-bottom: 30px; }
+  .important { color: #d32f2f; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>README موسع جدًا لمشروع رادار الأقمار الصناعية</h1>
+
+<div class="section">
+<h2>1. مقدمة</h2>
+<p>هذا المشروع عبارة عن نظام <strong>رادار أقمار صناعية تفاعلي</strong>، يتم عرضه على كرة أرضية ثلاثية الأبعاد باستخدام مكتبة <strong>CesiumJS</strong>. 
+النظام يقوم بعرض الأقمار الصناعية النشطة على الكرة الأرضية، ويحسب مواقعها بدقة باستخدام مكتبة <strong>satellite.js</strong> من ملفات <strong>TLE</strong>، وهي اختصار لـ "Two-Line Element set".</p>
+
+<p>ملف الـ TLE يحتوي على بيانات محددة لكل قمر: المدار، الارتفاع، الميل، وعدة قيم أخرى، مما يمكننا من <strong>حساب الموقع اللحظي للقمر في أي وقت</strong>.</p>
+
+<p>عند الضغط على أي قمر، يظهر <strong>لوحة جانبية</strong> تحتوي على:</p>
+<ul>
+<li>اسم القمر الصناعي.</li>
+<li>ارتفاعه الحالي عن سطح الأرض بالكيلومترات.</li>
+<li>المساحة التي يغطيها القمر على سطح الأرض (Footprint).</li>
+<li>رسالة تحذيرية إذا كان القمر في مدار عالي جدًا.</li>
+</ul>
+
+<p>النظام مصمم بشكل <strong>قابل للتوسع</strong>، بحيث يمكن إضافة:</p>
+<ul>
+<li>موديلات ثلاثية الأبعاد بدل النقاط البسيطة.</li>
+<li>طبقات بيانات إضافية مثل مسارات الأقمار أو المحطات الأرضية.</li>
+<li>خيارات التحكم في الارتفاع، التكبير، وتحديث البيانات بشكل مستمر.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>2. بيئة العمل والملفات المستخدمة</h2>
+<ul>
+<li><code>index.html</code>: الملف الرئيسي الذي يحتوي على الكود بالكامل.</li>
+<li><code>CesiumJS</code>: مكتبة JavaScript مفتوحة المصدر لعرض الكرة الأرضية ثلاثية الأبعاد.</li>
+<li><code>satellite.js</code>: مكتبة JavaScript لحساب مواقع الأقمار من ملفات TLE.</li>
+<li>ملف TLE: يتم جلبه من <a href="https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle" target="_blank">Celestrak</a>، وهو قاعدة بيانات حية للأقمار النشطة.</li>
+<li>HTML Elements: <code>div#cesiumContainer</code> لعرض الكرة الأرضية، و<code>div#data-panel</code> للوحة البيانات.</li>
+</ul>
+
+<p>ملاحظة هامة: الكود يستخدم <strong>Async/Await</strong> لأن جلب البيانات من الإنترنت وتحميل التضاريس يحتاج وقتًا، ونحتاج انتظار النتائج قبل متابعة تنفيذ الكود.</p>
+</div>
+
+<div class="section">
+<h2>3. createViewer()</h2>
+<p>هذه الفانكشن مسؤولة عن إنشاء مشهد Cesium الكامل، مع تحميل التضاريس العالمية، وإعداد المشهد للعرض والتحريك.</p>
+
+<pre><code>async function createViewer() {
+  return new Cesium.Viewer('cesiumContainer', {
+    shouldAnimate: true,
+    terrainProvider: await Cesium.createWorldTerrainAsync()
+  });
+}</code></pre>
+
+<h3>شرح كل سطر بالتفصيل</h3>
+<ul>
+<li><code>async function createViewer()</code>: تعرف فانكشن غير متزامنة <strong>async</strong> لأننا سنقوم بعملية تحميل التضاريس <em>asynchronously</em> من الإنترنت.</li>
+
+<li><code>return new Cesium.Viewer('cesiumContainer', { ... })</code>: هنا ننشئ كائن <strong>Viewer</strong> جديد من Cesium.  
+<ul>
+<li><code>'cesiumContainer'</code>: هذا هو معرف العنصر HTML حيث ستتم عملية العرض.</li>
+<li>كائن الإعدادات {...}:</li>
+  <ul>
+  <li><code>shouldAnimate: true</code>: يطلب من Viewer تحديث الحركة بشكل مستمر، أي أن أي تحديث في موقع الأقمار سيظهر مباشرة.</li>
+  <li><code>terrainProvider: await Cesium.createWorldTerrainAsync()</code>: تحميل التضاريس العالمية بشكل غير متزامن.  
+      <ul>
+      <li>Cesium توفر نموذج التضاريس العالمي لتجعل الكرة الأرضية تبدو ثلاثية الأبعاد وواقعية.</li>
+      <li>نستخدم <code>await</code> لأنه عملية التحميل تأخذ وقتًا ويجب انتظارها قبل إرجاع Viewer.</li>
+      </ul>
+  </li>
+  </ul>
+</li>
+</ul>
+</ul>
+
+<p>النقطة المهمة هنا: هذه الفانكشن ترجع الـ Viewer جاهز، يمكن استخدامه مباشرة في فانكشن startGlobalRadar لبقية العمليات مثل تحميل الأقمار، إنشاء footprint، وإعداد التفاعل.</p>
+
+</div>
+<div class="section">
+<h2>4. loadSatellites(viewer)</h2>
+<p>هذه الفانكشن مسؤولة عن <strong>تحميل بيانات الأقمار الصناعية</strong> من الإنترنت، وتحويلها إلى كائنات Cesium تظهر على الكرة الأرضية.</p>
+
+<pre><code>async function loadSatellites(viewer) {
+    const url = 'https://celestrak.org/NORAD/elements/gp.php?GROUP=active&FORMAT=tle';
+    const response = await fetch(url);
+    const data = await response.text();
+    const lines = data.split('\n');
+
+    for (let i = 0; i &lt; lines.length - 3; i += 3) {
+        const satRec = satellite.twoline2satrec(lines[i+1], lines[i+2]);
+        viewer.entities.add({
+            name: lines[i].trim(),
+            customData: { satRec: satRec },
+            position: new Cesium.CallbackProperty((time) =&gt; {
+                const date = Cesium.JulianDate.toDate(time);
+                const posVel = satellite.propagate(satRec, date);
+                if (posVel.position) {
+                    const gmst = satellite.gstime(date);
+                    const posGd = satellite.eciToGeodetic(posVel.position, gmst);
+                    return Cesium.Cartesian3.fromDegrees(
+                        satellite.degreesLong(posGd.longitude),
+                        satellite.degreesLat(posGd.latitude),
+                        posGd.height * 1000
+                    );
+                }
+            }, false),
+            point: { pixelSize: 4, color: Cesium.Color.WHITE }
+        });
+    }
+}</code></pre>
+
+<h3>شرح كل سطر بالتفصيل</h3>
+<ul>
+<li><code>const url = ...</code>: رابط قاعدة بيانات الأقمار الحية بصيغة TLE. كل قمر في قاعدة البيانات يحتوي على 3 أسطر:</li>
+<ul>
+<li>السطر الأول: اسم القمر.</li>
+<li>السطر الثاني والثالث: بيانات المدار (TLE).</li>
+</ul>
+
+<li><code>const response = await fetch(url)</code>: نقوم بجلب الملف من الإنترنت. نستخدم <strong>await</strong> لأن الشبكة تحتاج وقتًا، ونريد الانتظار حتى يكتمل التحميل.</li>
+
+<li><code>const data = await response.text()</code>: نحول الاستجابة إلى نص خام.</li>
+
+<li><code>const lines = data.split('\n')</code>: نقسم النص إلى أسطر، لأن كل قمر لديه 3 أسطر.</li>
+
+<li>الحلقة <code>for (let i = 0; i &lt; lines.length - 3; i += 3)</code>:  
+- نبدأ من السطر الأول (i=0).  
+- نزيد i بمقدار 3 كل مرة لأن كل قمر لديه 3 أسطر.  
+- <em>lines[i]</em> اسم القمر، <em>lines[i+1]</em> و <em>lines[i+2]</em> بيانات المدار.</li>
+
+<li><code>const satRec = satellite.twoline2satrec(lines[i+1], lines[i+2])</code>:  
+هنا نستخدم مكتبة satellite.js لتحويل السطرين الثاني والثالث إلى كائن <strong>satRec</strong> يحتوي على كل المعلومات اللازمة لحساب موقع القمر.</li>
+
+<li><code>viewer.entities.add({ ... })</code>: نضيف كائن جديد على الكرة الأرضية.  
+<ul>
+<li><code>name: lines[i].trim()</code>: اسم القمر.</li>
+<li><code>customData: { satRec }</code>: نخزن بيانات المدار داخل الكائن لأستخدامها لاحقًا.</li>
+<li><code>position: new Cesium.CallbackProperty(...)</code>:  
+- هذه الخاصية تحدد موقع الكائن على الكرة الأرضية بشكل ديناميكي.  
+- CallbackProperty يتم استدعاؤها في كل فريم من رسوم Cesium.</li>
+<li><code>point: { pixelSize: 4, color: Cesium.Color.WHITE }</code>: يمثل القمر كنقطة بيضاء.</li>
+</ul>
+</li>
+</ul>
+
+<h3>شرح الرياضيات والحسابات خطوة خطوة</h3>
+<ul>
+<li><code>const date = Cesium.JulianDate.toDate(time)</code>:  
+- <strong>JulianDate</strong> هو نوع وقت يستخدمه Cesium.  
+- نحولها إلى كائن Date عادي حتى تستطيع مكتبة satellite.js التعامل معها.</li>
+
+<li><code>const posVel = satellite.propagate(satRec, date)</code>:  
+- هذه الدالة تحسب **موقع وسرعة القمر في الوقت الحالي**.  
+- الناتج يحتوي على إحداثيات **ECI (Earth-Centered Inertial)**، أي نظام إحداثيات مركزه مركز الأرض.</li>
+
+<li>التحقق من <code>if(posVel.position)</code>: نتأكد أن الحساب نجح.</li>
+
+<li><code>const gmst = satellite.gstime(date)</code>:  
+- GMST = Greenwich Mean Sidereal Time  
+- نحتاجه لتحويل الإحداثيات من النظام ECI إلى النظام الجغرافي (Latitude, Longitude).</li>
+
+<li><code>const posGd = satellite.eciToGeodetic(posVel.position, gmst)</code>:  
+- نأخذ الإحداثيات الثلاثية ونحولها إلى **خط عرض وخط طول وارتفاع عن سطح الأرض**.</li>
+
+<li><code>Cesium.Cartesian3.fromDegrees(...)</code>:  
+- نحول خط الطول والعرض والارتفاع إلى إحداثيات XYZ في نظام Cesium لعرض القمر على الكرة.</li>
+
+<li><strong>تفسير خطوة خطوة للرياضيات:</strong>
+<ul>
+<li>ارتفاع القمر <code>posGd.height</code> بالمتر، نضرب ×1000 لتحويله إلى متر لأن Cesium يستخدم متر.</li>
+<li>التحويل من ECI إلى Geodetic يعتمد على دوران الأرض (GMST).</li>
+<li>هذه الطريقة تسمح للقمر بالتحرك بشكل صحيح على الكرة الأرضية في الوقت الحقيقي.</li>
+</ul>
+</li>
+</ul>
+
+</div>
+<div class="section">
+<h2>5. createFootprint(viewer)</h2>
+<p>الفانكشن دي مسؤولة عن إنشاء <strong>الدائرة الذهبية</strong> التي تمثل المساحة التي يغطيها القمر على سطح الأرض.</p>
+
+<pre><code>function createFootprint(viewer) {
+    return viewer.entities.add({
+        ellipse: {
+            material: Cesium.Color.GOLD.withAlpha(0.2),
+            outline: true,
+            outlineColor: Cesium.Color.WHITE,
+            height: 0
+        },
+        show: false
+    });
+}</code></pre>
+
+<h3>شرح كل سطر بالتفصيل</h3>
+<ul>
+<li><code>viewer.entities.add({ ... })</code>: نضيف كائن جديد على الكرة الأرضية.</li>
+<li><code>ellipse</code>: نوع الشكل الذي نرسمه، دائرة/إهليلج، هنا نصف قطره سيتغير ديناميكيًا حسب ارتفاع القمر.</li>
+<li><code>material: Cesium.Color.GOLD.withAlpha(0.2)</code>: لون شفاف للدوائر الذهبية.</li>
+<li><code>outline: true</code> و <code>outlineColor: Cesium.Color.WHITE</code>: لجعل محيط الدائرة واضحًا.</li>
+<li><code>height: 0</code>: الدائرة على سطح الأرض (ارتفاع 0).</li>
+<li><code>show: false</code>: نخفي الدائرة أولًا، ونظهرها فقط عند الضغط على القمر.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>6. setupClickHandler(viewer, footprint)</h2>
+<p>هذه الفانكشن مسؤولة عن:</p>
+<ul>
+<li>تحديد القمر الذي ضغط المستخدم عليه.</li>
+<li>تحديث لوحة البيانات الجانبية.</li>
+<li>حساب نصف القطر والمساحة لكل قمر لحظة بلحظة.</li>
+</ul>
+
+<pre><code>function setupClickHandler(viewer, footprint) {
+    const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
+
+    handler.setInputAction((click) => {
+        const picked = viewer.scene.pick(click.position);
+
+        if (Cesium.defined(picked) && picked.id && picked.id.customData) {
+            const entity = picked.id;
+            viewer.trackedEntity = entity;
+            document.getElementById('data-panel').style.display = 'block';
+            footprint.show = true;
+
+            footprint.position = new Cesium.CallbackProperty((time) =&gt; {
+                const pos = entity.position.getValue(time);
+                if (!pos) return undefined;
+                const carto = Cesium.Cartographic.fromCartesian(pos);
+                return Cesium.Cartesian3.fromDegrees(
+                    Cesium.Math.toDegrees(carto.longitude),
+                    Cesium.Math.toDegrees(carto.latitude),
+                    0
+                );
+            }, false);
+
+            footprint.ellipse.semiMajorAxis = new Cesium.CallbackProperty((time) =&gt; {
+                const pos = entity.position.getValue(time);
+                if (!pos) return 0;
+                const h = Cesium.Cartographic.fromCartesian(pos).height / 1000;
+
+                // حساب الأفق البصري خطوة خطوة:
+                let R = 6371; // نصف قطر الأرض بالكيلومتر
+                // تخيل الأرض ككرة، القمر فوقها على ارتفاع h
+                // المسافة الأفقية من القمر إلى الحافة التي يرى منها الأرض:
+                let d = Math.sqrt(Math.pow(R + h, 2) - Math.pow(R, 2));
+
+                // Spherical Cap Area: مساحة الجزء المرئي من الكرة الأرضية
+                // هذا يشبه قطعة كعكة كروية من الكرة
+                let area = 2 * Math.PI * R * R * (h / (R + h));
+
+                // تطبيق حد أقصى للرسم لمنع "الدوائر الكبيرة جدًا"
+                const maxVisualRadius = R * (Math.PI / 2) * 1000;
+                let drawRadius = d * 1000;
+
+                if (drawRadius > maxVisualRadius) {
+                    drawRadius = maxVisualRadius;
+                    document.getElementById('warning').style.display = 'block';
+                } else {
+                    document.getElementById('warning').style.display = 'none';
+                }
+
+                // تحديث لوحة البيانات
+                document.getElementById('sat-name').innerText = entity.name;
+                document.getElementById('sat-alt').innerText = Math.round(h).toLocaleString();
+                document.getElementById('sat-area').innerText = Math.round(area).toLocaleString();
+
+                return drawRadius;
+            }, false);
+
+            footprint.ellipse.semiMinorAxis = footprint.ellipse.semiMajorAxis;
+
+        } else {
+            footprint.show = false;
+            viewer.trackedEntity = undefined;
+            document.getElementById('data-panel').style.display = 'none';
+        }
+    }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
+}</code></pre>
+
+<h3>شرح كل خطوة رياضي ومنطقي</h3>
+<ul>
+<li><strong>الأفق البصري:</strong>  
+<ul>
+<li>نعتبر الأرض كرة نصف قطرها R (6371 كم).</li>
+<li>القمر على ارتفاع h كم فوق الأرض.</li>
+<li>المسافة الأفقية d للقمر = الجذر التربيعي لـ [(R+h)² - R²]</li>
+<li>تفسير مبسط: تخيل خط من القمر يصل لأقصى نقطة يمكن رؤيتها على سطح الأرض، يشكل مثلث قائم الزاوية مع مركز الأرض.</li>
+</ul>
+</li>
+
+<li><strong>مساحة الجزء المرئي (Spherical Cap Area):</strong>
+<ul>
+<li>الفكرة: جزء الكرة الذي "يظهر" للقمر يشبه غطاء كروي.</li>
+<li>المعادلة: area = 2 × π × R² × (h / (R+h))</li>
+<li>الشرح: كلما ارتفع القمر، تزيد مساحة الجزء المرئي، لكن لا يمكن أن تتجاوز نصف مساحة الأرض.</li>
+</ul>
+</li>
+
+<li><strong>التحكم بالرسم:</strong>
+<ul>
+<li>drawRadius يحدد نصف القطر الذي يظهر على الكرة.</li>
+<li>maxVisualRadius يحد أقصى نصف القطر لمنع انفجار الرسم عند الأقمار العالية جدًا.</li>
+<li>إذا تجاوز drawRadius الحد، نعرض تحذير <code>#warning</code>.</li>
+</ul>
+</li>
+
+<li><strong>تحديث اللوحة:</strong>  
+- كل فريم يحدث بيانات الارتفاع والمساحة، ويعرضها للمستخدم في الوقت الحقيقي.</li>
+</ul>
+
+</div>
+<div class="section">
+<h2>7. استبدال النقاط بموديلات ثلاثية الأبعاد (3D Models)</h2>
+<p>حاليًا كل قمر يظهر كنقطة بيضاء بسيطة (<code>point</code>).  
+يمكننا استبدالها بموديل ثلاثي الأبعاد ليكون العرض أكثر واقعية.</p>
+
+<pre><code>viewer.entities.add({
+    name: "Satellite 1",
+    customData: { satRec: satRec },
+    position: new Cesium.CallbackProperty(...),
+    model: {
+        uri: 'models/satellite.glb',  // ملف النموذج ثلاثي الأبعاد بصيغة glTF
+        minimumPixelSize: 64,         // الحجم الأدنى للنموذج على الشاشة
+        maximumScale: 200,            // الحجم الأقصى للنموذج عند التكبير
+        scale: 1.0,                    // مقياس افتراضي للنموذج
+        color: Cesium.Color.WHITE
+    }
+});</code></pre>
+
+<h3>شرح كل سطر</h3>
+<ul>
+<li><code>uri</code>: رابط النموذج ثلاثي الأبعاد، يمكن أن يكون ملف <code>.glb</code> أو <code>.gltf</code>.</li>
+<li><code>minimumPixelSize</code>: يضمن أن النموذج لن يصبح صغيرًا جدًا عند عرض الكرة الأرضية من بعيد.</li>
+<li><code>maximumScale</code>: الحد الأعلى لتكبير النموذج لتجنب ظهور أحجام غير منطقية.</li>
+<li><code>scale</code>: مقياس النموذج الأساسي.</li>
+<li><code>color</code>: لون افتراضي، يمكن استخدامه لتظليل النموذج أو تمييزه عن الأقمار الأخرى.</li>
+</ul>
+
+<p>الميزة: بهذه الطريقة يمكنك وضع أي نموذج، سواء كان قمر صناعي واقعي، صاروخ، أو حتى محطة فضاء.</p>
+</div>
+
+<div class="section">
+<h2>8. التحكم في اتجاه القمر (Orientation)</h2>
+<p>عند استخدام موديلات 3D، يمكننا ضبط اتجاه القمر بحيث يتبع مسار مدار الأرض:</p>
+
+<pre><code>entity.model.orientation = new Cesium.VelocityOrientationProperty(entity.position);</code></pre>
+
+<ul>
+<li>Cesium.VelocityOrientationProperty: خاصية تجعل النموذج يتجه دائمًا في اتجاه الحركة (velocity) الخاص بالقمر.</li>
+<li>مفيد لجعل الأقمار تظهر وكأنها تتحرك بشكل واقعي على المدار.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>9. تحسين الأداء مع مئات الأقمار</h2>
+<p>إذا أردنا عرض مئات أو آلاف الأقمار، يجب اتباع النصائح التالية:</p>
+<ul>
+<li>استخدم <strong>PointPrimitiveCollection</strong> بدلاً من Entities للنقاط البسيطة، فهو أسرع بكثير.</li>
+<li>قم بتحديد <code>disableDepthTestDistance</code> للنقاط أو الموديلات لتقليل الحسابات الرسومية.</li>
+<li>قلل استخدام CallbackProperty المعقدة لكل فريم إذا كان القمر بعيدًا عن الكاميرا.</li>
+<li>قم بتحديث البيانات على فواصل زمنية محددة بدلاً من كل فريم (مثلاً كل ثانية).</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>10. نصائح Debugging</h2>
+<ul>
+<li>إذا لم يظهر القمر، تحقق من أن بيانات TLE صحيحة ويمكن الوصول إليها من الإنترنت.</li>
+<li>استخدم <code>console.log(entity.position.getValue(time))</code> لفحص المواقع لحظة بلحظة.</li>
+<li>تأكد من أن <code>Cesium.Ion.defaultAccessToken</code> صالح إذا كنت تستخدم تضاريس Cesium Ion.</li>
+<li>عند استخدام موديلات 3D، تحقق من المسار الصحيح للملف <code>uri</code>.</li>
+<li>إذا كان الأداء بطيء، قلل عدد الأقمار أو استخدم <strong>clustering</strong> للـ Entities.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>11. الخلاصة</h2>
+<p>هذا المشروع يشمل:</p>
+<ul>
+<li>عرض الكرة الأرضية ثلاثية الأبعاد باستخدام CesiumJS.</li>
+<li>تحميل بيانات الأقمار من ملفات TLE باستخدام satellite.js.</li>
+<li>حساب المواقع اللحظية للأقمار وتحويلها من ECI → Geodetic → Cartesian3.</li>
+<li>رسم الدائرة الذهبية (Footprint) لكل قمر وحساب المساحة المرئية (Spherical Cap Area) رياضيًا.</li>
+<li>تفاعل مع المستخدم بالضغط على الأقمار، مع تحديث لوحة البيانات لحظيًا.</li>
+<li>إمكانية استبدال النقاط بموديلات 3D حقيقية والتحكم في اتجاهها.</li>
+<li>نصائح لتحسين الأداء عند عدد كبير من الأقمار وDebugging فعال.</li>
+</ul>
+
+<p>الـ README ده يعطي أي شخص شرح كامل جدًا، خطوة خطوة، مع الرياضيات والفيزياء خلف كل عملية، بحيث يمكن تعديل المشروع أو تطويره بسهولة.</p>
+</div>
+
+</body>
+</html>
