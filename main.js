@@ -3,9 +3,6 @@ Cesium.Ion.defaultAccessToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOi
 let viewer;
 const selector = document.getElementById("sat-selector");
 
-// ===============================
-// 1️⃣ Create Cesium Viewer
-// ===============================
 async function createViewer() {
   viewer = new Cesium.Viewer('cesiumContainer', {
     shouldAnimate: true,
@@ -21,9 +18,7 @@ async function createViewer() {
   return viewer;
 }
 
-// ===============================
-// 2️⃣ Load satellites dynamically
-// ===============================
+
 async function loadSatellites(viewer, option) {
   const url = `https://celestrak.org/NORAD/elements/gp.php?GROUP=${option}&FORMAT=tle`;
   try {
@@ -64,9 +59,7 @@ async function loadSatellites(viewer, option) {
   }
 }
 
-// ===============================
-// 3️⃣ Create footprint
-// ===============================
+
 function createFootprint(viewer) {
   return viewer.entities.add({
     ellipse: {
@@ -79,9 +72,6 @@ function createFootprint(viewer) {
   });
 }
 
-// ===============================
-// 4️⃣ Handle click events
-// ===============================
 function setupClickHandler(viewer, footprint) {
   const R = 6371;
   const handler = new Cesium.ScreenSpaceEventHandler(viewer.scene.canvas);
@@ -136,20 +126,16 @@ function setupClickHandler(viewer, footprint) {
   }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 }
 
-// ===============================
-// 5️⃣ Dropdown changes
-// ===============================
+
 selector.addEventListener("change", async () => {
   const option = selector.value || "active";
   if (!viewer) return;
 
-  viewer.entities.removeAll(); // clear previous satellites
+  viewer.entities.removeAll(); 
   await loadSatellites(viewer, option);
 });
 
-// ===============================
-// 6️⃣ Run the project
-// ===============================
+
 (async function startGlobalRadar() {
   try {
     await createViewer();
